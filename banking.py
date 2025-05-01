@@ -1,51 +1,48 @@
-# Import the library to connect to MySQL
-import mysql.connector
-from decimal import Decimal  # For precise financial calculations
 
-# Connect to the database (replace these with your database details)
+import mysql.connector
+from decimal import Decimal  
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="Jul040607!",  # Replace with your actual password
-    database="onlinebanking"          # Replace with your database name
+    password="Jul040607!",  
+    database="onlinebanking"          
 )
-cursor = db.cursor()  # This lets us run commands on the database
+cursor = db.cursor()  
 
-# Function to log in to an account
+
 def login():
     account_number = input("Enter your account number: ")
     pin = input("Enter your PIN: ")
 
-    # Check if the account exists in the database
+    
     query = "SELECT * FROM Accounts WHERE account_number = %s AND pin = %s"
     cursor.execute(query, (account_number, pin))
-    user = cursor.fetchone()  # Get the account details
+    user = cursor.fetchone()  
 
-    if user:  # If we found a matching account
+    if user: 
         print(f"\nLogin successful. Welcome back, {user[2]}!")
         return user
     else:
         print("\nIncorrect account number or PIN. Please try again.")
         return None
 
-# Function to create a new account
 def create_account():
     account_number = input("Choose a new account number: ")
     pin = input("Set a PIN: ")
     full_name = input("Enter your full name: ")
 
-    # Check if the account number already exists
+   
     cursor.execute("SELECT * FROM Accounts WHERE account_number = %s", (account_number,))
-    if cursor.fetchone():  # If we find an account with the same number
+    if cursor.fetchone():  
         print("Account number already exists. Try again.")
     else:
-        # Add the new account to the database
+        
         cursor.execute("INSERT INTO Accounts (account_number, pin, full_name, balance) VALUES (%s, %s, %s, %s)",
-                       (account_number, pin, full_name, 0.00))  # Starting balance is $0.00
-        db.commit()  # Save changes to the database
+                       (account_number, pin, full_name, 0.00)) 
+        db.commit() 
         print("Account created successfully!")
 
-# Function to check balance
+
 def check_balance(account_number):
     cursor.execute("SELECT balance FROM Accounts WHERE account_number = %s", (account_number,))
     balance = cursor.fetchone()
@@ -54,21 +51,21 @@ def check_balance(account_number):
     else:
         print("\nAccount not found.")
 
-# Function to deposit money
+
 def deposit(account_number):
     try:
-        amount = float(input("Enter the amount to deposit: "))  # Get deposit amount
-        if amount <= 0:  # Validate input
+        amount = float(input("Enter the amount to deposit: "))  
+        if amount <= 0:  
             print("\nDeposit amount must be greater than 0.")
             return
 
-        # Convert amount to Decimal for consistency
+        
         amount = Decimal(str(amount))
         
         cursor.execute("SELECT balance FROM Accounts WHERE account_number = %s", (account_number,))
         balance = cursor.fetchone()
         if balance:
-            new_balance = Decimal(balance[0]) + amount  # Add deposit to current balance
+            new_balance = Decimal(balance[0]) + amount  
             cursor.execute("UPDATE Accounts SET balance = %s WHERE account_number = %s", (new_balance, account_number))
             db.commit()
             print(f"Deposit successful! Your new balance is: ${new_balance:.2f}")
@@ -77,25 +74,25 @@ def deposit(account_number):
     except Exception as e:
         print(f"\nAn error occurred: {e}")
 
-# Function to withdraw money
+
 def withdraw(account_number):
     try:
-        amount = float(input("Enter the amount to withdraw: "))  # Get withdrawal amount
-        if amount <= 0:  # Validate input
+        amount = float(input("Enter the amount to withdraw: "))  
+        if amount <= 0:  
             print("\nWithdrawal amount must be greater than 0.")
             return
 
-        # Convert amount to Decimal for consistency
+    
         amount = Decimal(str(amount))
         
         cursor.execute("SELECT balance FROM Accounts WHERE account_number = %s", (account_number,))
         balance = cursor.fetchone()
         if balance:
             current_balance = Decimal(balance[0])
-            if amount > current_balance:  # Check for insufficient funds
+            if amount > current_balance:  
                 print("\nInsufficient funds. Withdrawal canceled.")
             else:
-                new_balance = current_balance - amount  # Subtract withdrawal from current balance
+                new_balance = current_balance - amount  
                 cursor.execute("UPDATE Accounts SET balance = %s WHERE account_number = %s", (new_balance, account_number))
                 db.commit()
                 print(f"Withdrawal successful! Your new balance is: ${new_balance:.2f}")
@@ -104,7 +101,6 @@ def withdraw(account_number):
     except Exception as e:
         print(f"\nAn error occurred: {e}")
 
-# Function to edit account information
 def edit_account(account_number):
     print("\n1. Change Name")
     print("2. Change PIN")
@@ -123,7 +119,7 @@ def edit_account(account_number):
     else:
         print("\nInvalid choice.")
 
-# Function to close an account
+
 def close_account(account_number):
     confirmation = input("Are you sure you want to close your account? (yes/no): ")
     if confirmation.lower() == "yes":
@@ -133,18 +129,18 @@ def close_account(account_number):
     else:
         print("\nAccount closure canceled.")
 
-# Main function to run the program
+
 def main():
-    print("Welcome to SmartBank!")  # Welcome message
+    print("Welcome to SmartBank!")  
     print("1. Log In")
     print("2. Create New Account")
     print("3. Exit")
     
     choice = input("Enter your choice (1-3): ")
 
-    if choice == "1":  # Log in
+    if choice == "1":  
         user = login()
-        if user:  # If login is successful
+        if user:  
             account_number = user[0]
             while True:
                 print("\nWhat would you like to do?")
@@ -173,13 +169,12 @@ def main():
                     break
                 else:
                     print("\nInvalid choice. Please try again.")
-    elif choice == "2":  # Create a new account
+    elif choice == "2": 
         create_account()
-    elif choice == "3":  # Exit the program
+    elif choice == "3":  
         print("Goodbye!")
     else:
         print("\nInvalid choice. Please choose 1, 2, or 3.")
 
-# Run the main function
 if __name__ == "__main__":
     main()
